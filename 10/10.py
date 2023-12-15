@@ -52,7 +52,7 @@ while len(queue) > 0:
 
 distances = list(visited.values())
 distances.sort()
-print(distances[-1])
+# print(distances[-1])
 
 visited = {}
 visited[start] = [start]
@@ -68,75 +68,77 @@ while len(queue) > 0:
 
 
 loop = list(visited.values())[-1] + list(visited.values())[-2]
-loop.sort()
-# print(loop)
 
 size_x = len(lines)
 size_y = len(lines[0])
 
-def check_up(i, j):
-    k = i
-    while k > -1:
-        if (k,j) in loop:
-            return True
-        k -= 1
-    return False
+def find_not_loop_ns(current):
+    x, y = current
+    neighbors = []
+    if x > 0 and (x - 1, y) not in loop:
+        neighbors.append((x - 1, y))
 
-def check_down(i, j):
-    k = i
-    while k < size_x:
-        if (k,j) in loop:
-            return True
-        k += 1
-    return False
+    if x < size_x - 1 and (x + 1, y) not in loop:
+        neighbors.append((x + 1, y))
 
-def check_left(i, j):
-    k = j
-    while k > -1:
-        if (i,k) in loop:
-            return True
-        k -= 1
-    return False
+    if y > 0 and (x, y - 1) not in loop:
+        neighbors.append((x, y - 1))
 
-def check_right(i, j):
-    k = j
-    while k < size_y:
-        if (i,k) in loop:
-            return True
-        k += 1
-    return False
+    if y < size_y - 1 and (x, y + 1) not in loop:
+        neighbors.append((x, y + 1))
+
+    return neighbors
+
+outside = set()
+
+def find_cluster(start):
+    visited = set()
+    visited.add(start)
+    queue = [start]
+    while len(queue) > 0:
+        current = queue.pop(0)
+        neighbors = find_not_loop_ns(current)
+        for n in neighbors:
+            if n not in visited:
+                visited.add(n)
+                queue.append(n)
+    return visited
 
 
-def check_inside(i, j):
-    return check_up(i, j) and check_down(i, j) and check_left(i, j) and check_right(i, j)
+for i in range(size_x):
+    j = 0
+    if (i,j) not in loop and (i,j) not in outside:
+        v = find_cluster((i, j))
+        outside = outside.union(v)
+    j = size_y - 1
+    if (i,j) not in loop and (i,j) not in outside:
+        v = find_cluster((i, j))
+        outside = outside.union(v)
+for j in range(size_y):
+    i = 0
+    if (i,j) not in loop and (i,j) not in outside:
+        v = find_cluster((i, j))
+        outside = outside.union(v)
+    i = size_x - 1
+    if (i,j) not in loop and (i,j) not in outside:
+        v = find_cluster((i, j))
+        outside = outside.union(v)
 
-inside = []
+all = set(loop).union(outside)
+inside = set()
 for i in range(size_x):
     for j in range(size_y):
-        if (i,j) not in loop:
-            if check_inside(i,j):
-                inside.append((i,j))
-print(inside)
+        if (i, j) not in all:
+            inside.add((i,j))
 
-
+loop = [(x[1], x[0]) for x in loop]
+outside = [(x[1], x[0]) for x in outside]
+inside = [(x[1], x[0]) for x in inside]
 
 import matplotlib.pyplot as plt
-plt.scatter(*zip(*loop))
-# plt.show()
-plt.scatter(*zip(*inside))
+f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, sharex=True)
+ax1.scatter(*zip(*loop), c=["blue"])
+ax1.scatter(*zip(*outside), c=["red"])
+ax1.scatter(*zip(*inside), c=["orange"])
+ax1.set_title(f'Outside ({len(outside)}), loop ({len(loop)}) and inside ({len(inside)})')
 plt.show()
-
-
-# visited = {}
-
-# def dfs(current, i):
-#     visited[current] = i
-#     neighbors = find_neighbors(current)
-#     for n in neighbors:
-#         if n not in visited or visited[n] > i:
-#             dfs(n, i + 1)
-
-# dfs(start, 0)
-# distances = list(visited.values())
-# distances.sort()
-# print(distances[-1])
